@@ -1,0 +1,250 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Incidentes - AutoMarket Perú</title>
+    <link rel="stylesheet" href="styles.css">
+    <link rel="stylesheet" href="navbar/navbar.css">
+    <link rel="stylesheet" href="footer.css">
+    <link rel="stylesheet" href="incidentes.css">
+</head>
+<body>
+
+    <nav class="navbar">
+        <div class="logo">AutoMarket</div>
+        <ul class="nav-links">
+            <li><a href="index.html">Inicio</a></li>
+            <li><a href="index.html#">Explorar</a></li>
+            <li><a href="index.html#">Comprar</a></li>
+            <li><a href="index.html#">Vender</a></li>
+            <li><a href="incidentes.html" class="active">Incidentes</a></li>
+        </ul>
+        <div class="search-box">
+            <input type="text" placeholder="Buscar incidentes...">
+            <button>🔍</button>
+        </div>
+        <div class="nav-actions">
+            <a href="Login-register/login.html" class="login">Iniciar sesión</a>
+        </div>
+    </nav>
+
+    <main class="incidentes-main">
+        <div class="incidentes-header">
+            <h1>Sistema de Seguimiento de Incidentes</h1>
+            <p>Registro y control de errores, mejoras y reportes del sistema AutoMarket Perú</p>
+            <button class="btn-nuevo" onclick="abrirModal()">+ Nuevo Incidente</button>
+        </div>
+
+        <div class="filtros">
+            <select id="filtro-estado" onchange="cargarIncidentes()">
+                <option value="">Todos los estados</option>
+                <option value="abierto">Abierto</option>
+                <option value="en_progreso">En Progreso</option>
+                <option value="resuelto">Resuelto</option>
+                <option value="cerrado">Cerrado</option>
+            </select>
+            <select id="filtro-categoria" onchange="cargarIncidentes()">
+                <option value="">Todas las categorías</option>
+                <option value="bug">Bug</option>
+                <option value="mejora">Mejora</option>
+                <option value="incidente">Incidente</option>
+            </select>
+            <select id="filtro-prioridad" onchange="cargarIncidentes()">
+                <option value="">Todas las prioridades</option>
+                <option value="baja">Baja</option>
+                <option value="media">Media</option>
+                <option value="alta">Alta</option>
+                <option value="critica">Crítica</option>
+            </select>
+        </div>
+
+        <div class="resumen-cards">
+            <div class="card abiertos">
+                <span class="card-num" id="count-abiertos">0</span>
+                <span class="card-label">Abiertos</span>
+            </div>
+            <div class="card progreso">
+                <span class="card-num" id="count-progreso">0</span>
+                <span class="card-label">En Progreso</span>
+            </div>
+            <div class="card resueltos">
+                <span class="card-num" id="count-resueltos">0</span>
+                <span class="card-label">Resueltos</span>
+            </div>
+            <div class="card total">
+                <span class="card-num" id="count-total">0</span>
+                <span class="card-label">Total</span>
+            </div>
+        </div>
+
+        <div class="tabla-container">
+            <table class="tabla-incidentes">
+                <thead>
+                    <tr>
+                        <th>ID</th>
+                        <th>Título</th>
+                        <th>Categoría</th>
+                        <th>Prioridad</th>
+                        <th>Estado</th>
+                        <th>Reportado por</th>
+                        <th>Fecha</th>
+                        <th>Acciones</th>
+                    </tr>
+                </thead>
+                <tbody id="tabla-body">
+                </tbody>
+            </table>
+        </div>
+    </main>
+
+    <div id="modal" class="modal hidden">
+        <div class="modal-content">
+            <span class="cerrar" onclick="cerrarModal()">&times;</span>
+            <h2>Reportar Incidente</h2>
+            <form id="form-incidente">
+                <label for="titulo">Título</label>
+                <input type="text" id="titulo" required>
+
+                <label for="descripcion">Descripción</label>
+                <textarea id="descripcion" rows="3"></textarea>
+
+                <label for="categoria">Categoría</label>
+                <select id="categoria">
+                    <option value="incidente">Incidente</option>
+                    <option value="bug">Bug</option>
+                    <option value="mejora">Mejora</option>
+                </select>
+
+                <label for="prioridad">Prioridad</label>
+                <select id="prioridad">
+                    <option value="baja">Baja</option>
+                    <option value="media" selected>Media</option>
+                    <option value="alta">Alta</option>
+                    <option value="critica">Crítica</option>
+                </select>
+
+                <label for="creado_por">Reportado por</label>
+                <input type="text" id="creado_por" placeholder="Tu nombre">
+
+                <button type="submit">Enviar Reporte</button>
+            </form>
+        </div>
+    </div>
+
+    <footer>
+        <h3>Venta de Autos</h3>
+        <p>&copy; 2026 Todos los derechos reservados</p>
+        <div class="footer-links">
+            <a href="index.html">Inicio</a>
+            <a href="incidentes.html">Incidentes</a>
+            <a href="#">Contacto</a>
+        </div>
+    </footer>
+
+    <script>
+        const API = 'https://herramientas-de-desarrollo-practica.onrender.com/api/incidentes';
+        let editandoId = null;
+
+        function cargarIncidentes() {
+            const estado = document.getElementById('filtro-estado').value;
+            const categoria = document.getElementById('filtro-categoria').value;
+            const prioridad = document.getElementById('filtro-prioridad').value;
+
+            fetch(API)
+                .then(r => r.json())
+                .then(data => {
+                    let filtrados = data;
+
+                    if (estado) filtrados = filtrados.filter(i => i.estado === estado);
+                    if (categoria) filtrados = filtrados.filter(i => i.categoria === categoria);
+                    if (prioridad) filtrados = filtrados.filter(i => i.prioridad === prioridad);
+
+                    const tbody = document.getElementById('tabla-body');
+                    tbody.innerHTML = filtrados.map(i => `
+                        <tr>
+                            <td>#${i.id}</td>
+                            <td>${i.titulo}</td>
+                            <td><span class="badge badge-${i.categoria}">${i.categoria}</span></td>
+                            <td><span class="badge badge-p-${i.prioridad}">${i.prioridad}</span></td>
+                            <td><span class="badge badge-e-${i.estado}">${i.estado.replace('_', ' ')}</span></td>
+                            <td>${i.creado_por}</td>
+                            <td>${new Date(i.fecha_creacion).toLocaleDateString()}</td>
+                            <td class="acciones">
+                                <button class="btn-accion editar" onclick="editarIncidente(${i.id})">✏️</button>
+                                <button class="btn-accion eliminar" onclick="eliminarIncidente(${i.id})">🗑️</button>
+                            </td>
+                        </tr>
+                    `).join('');
+
+                    actualizarResumen(data);
+                });
+        }
+
+        function actualizarResumen(data) {
+            document.getElementById('count-abiertos').textContent = data.filter(i => i.estado === 'abierto').length;
+            document.getElementById('count-progreso').textContent = data.filter(i => i.estado === 'en_progreso').length;
+            document.getElementById('count-resueltos').textContent = data.filter(i => i.estado === 'resuelto' || i.estado === 'cerrado').length;
+            document.getElementById('count-total').textContent = data.length;
+        }
+
+        function abrirModal() {
+            editandoId = null;
+            document.getElementById('form-incidente').reset();
+            document.getElementById('modal').classList.remove('hidden');
+            document.querySelector('#modal h2').textContent = 'Reportar Incidente';
+        }
+
+        function cerrarModal() {
+            document.getElementById('modal').classList.add('hidden');
+        }
+
+        function editarIncidente(id) {
+            editandoId = id;
+            fetch(`${API}/${id}`)
+                .then(r => r.json())
+                .then(i => {
+                    document.getElementById('titulo').value = i.titulo;
+                    document.getElementById('descripcion').value = i.descripcion;
+                    document.getElementById('categoria').value = i.categoria;
+                    document.getElementById('prioridad').value = i.prioridad;
+                    document.getElementById('creado_por').value = i.creado_por;
+                    document.getElementById('modal').classList.remove('hidden');
+                    document.querySelector('#modal h2').textContent = 'Editar Incidente';
+                });
+        }
+
+        function eliminarIncidente(id) {
+            if (confirm('¿Eliminar este incidente?')) {
+                fetch(`${API}/${id}`, { method: 'DELETE' })
+                    .then(() => cargarIncidentes());
+            }
+        }
+
+        document.getElementById('form-incidente').addEventListener('submit', function(e) {
+            e.preventDefault();
+            const data = {
+                titulo: document.getElementById('titulo').value,
+                descripcion: document.getElementById('descripcion').value,
+                categoria: document.getElementById('categoria').value,
+                prioridad: document.getElementById('prioridad').value,
+                creado_por: document.getElementById('creado_por').value,
+            };
+
+            const url = editandoId ? `${API}/${editandoId}` : API;
+            const method = editandoId ? 'PUT' : 'POST';
+
+            fetch(url, {
+                method,
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify(data),
+            }).then(() => {
+                cerrarModal();
+                cargarIncidentes();
+            });
+        });
+
+        cargarIncidentes();
+    </script>
+</body>
+</html>
